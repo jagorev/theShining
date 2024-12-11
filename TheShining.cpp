@@ -48,13 +48,13 @@ class stack_polaretto{
                 ciclo.push_back(vec[i]);
                 ++conteggio[vec[i]];
             }
+            conteggio[n]++;
             ciclo.push_back(n);
             ++n_cicli;
         }else{
             for(i = vec.size() -1 ; i >= 0 && vec[i] != n ; --i){
                 ++conteggio[vec[i]];
             }
-            
             conteggio[n]++;
             ++n_cicli;
         }
