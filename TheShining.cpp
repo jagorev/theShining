@@ -72,44 +72,53 @@ class node{
 };
 
 
-vector<vector<int>>& trova_cicli(vector<node> grafo, int num_nodi, vector<vector<int>> &cicli, vector<int> &conteggio ){ // ritorna i cicli del grafo
+vector<vector<int>>& trova_cicli(vector<node> grafo, int num_nodi, vector<vector<int>> &cicli, vector<int> &conteggio,set<int>& nodi_visistare ){ // ritorna i cicli del grafo
+
 
     stack_polaretto stack;
 
-    stack.push(0); // se 0 è separato da problemi
-
     vector<bool> visited(num_nodi,false); // inizializzo a false
 
-    while(!stack.isEmpty()){
+    while(!nodi_visistare.empty()){
 
-        int elem = stack.top(); // prendo il primo elemento. (?) se zero NON è nel grafo?
+        stack.push(*nodi_visistare.begin());
 
-        visited[elem] = true;
+        while(!stack.isEmpty()){
 
-        if(grafo[elem].getDaVisitare().empty()){ // se non ci sono elementi da visitare (non ci sono vicini)
-            grafo[elem].swap();
-            stack.pop();
+            int elem = stack.top(); // prendo il primo elemento. (?) se zero NON è nel grafo?
+            nodi_visistare.erase(elem);
 
-        }else{
-             // Prendo il primo elemento da `daVisitare`
-            auto it = grafo[elem].getDaVisitare().begin(); //restiutuisce un iteratore al primo elemento
-            int a = *it;
+            visited[elem] = true;
 
-            // Sposto l'elemento
-            grafo[elem].getVisistati().insert(a);
-            grafo[elem].getDaVisitare().erase(it);
+            if(grafo[elem].getDaVisitare().empty()){ // se non ci sono elementi da visitare (non ci sono vicini)
+                grafo[elem].swap();
+                stack.pop();
 
-            if (stack.isInStack(a)) {
-                // Trovato un ciclo, non pusho nello stack
-                cicli.push_back(stack.getCycle(a, conteggio));
+            }else{
+                // Prendo il primo elemento da `daVisitare`
+                auto it = grafo[elem].getDaVisitare().begin(); //restiutuisce un iteratore al primo elemento
+                int a = *it;
 
-            } else {
-                // Aggiungi il nodo nello stack
-                stack.push(a);
+                // Sposto l'elemento
+                grafo[elem].getVisistati().insert(a);
+                grafo[elem].getDaVisitare().erase(it);
+
+                if (stack.isInStack(a)) {
+                    // Trovato un ciclo, non pusho nello stack
+                    cicli.push_back(stack.getCycle(a, conteggio));
+
+                } else {
+                    // Aggiungi il nodo nello stack
+                    stack.push(a);
+                }
             }
+
         }
 
     }
+
+    
+
 
     return cicli;
 }
@@ -131,6 +140,10 @@ int main(){
 
     inputFile >> numero_nodi >> numero_archi;
     vector<node> grafo_iniziale(numero_nodi);
+    set<int> nodi_da_visitare;
+    for(int i = 0; i < numero_nodi; ++i){
+        nodi_da_visitare.insert(i);
+    }
     int s,a;
     for(int i = 0 ; i < numero_archi; ++i){
         inputFile>>s>>a;
@@ -142,7 +155,7 @@ int main(){
     vector<vector<int>> cicli;
     vector<int> conteggio(numero_nodi,0);
 
-    trova_cicli(grafo_iniziale,numero_nodi,cicli, conteggio);
+    trova_cicli(grafo_iniziale,numero_nodi,cicli, conteggio,nodi_da_visitare);
 
     /*
     for(auto a: cicli){
