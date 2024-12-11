@@ -6,6 +6,7 @@
 
 using namespace std;
 
+
 class stack_polaretto{
     private:
         vector<int> vec;
@@ -16,7 +17,7 @@ class stack_polaretto{
         vec.push_back(v);
         in_stack.insert(v);
     }
-    
+
     void pop(){
         int v = vec[vec.size() - 1];
         vec.pop_back();
@@ -30,19 +31,21 @@ class stack_polaretto{
     bool isInStack(int n){
         return in_stack.find(n) != in_stack.end(); // controlla
     }
-    
+
     bool isEmpty(){
         return vec.size() == 0;
     }
 
 
-    vector<int> getCycle(int n){ // da chiamare solo quando si è sicuri, gestisco il caso in cui non ci sia ma è meglio non specare tempo
+    vector<int> getCycle(int n, vector<int> &conteggio){ // da chiamare solo quando si è sicuri, gestisco il caso in cui non ci sia ma è meglio non specare tempo
         vector<int> ris;
         int i;
         for(i = vec.size() -1 ; i >= 0 && vec[i] != n ; --i){
             ris.push_back(vec[i]);
+            conteggio[vec[i]]++;
         }
         ris.push_back(n);
+        conteggio[n]++;
         if(i < 0 && vec[0] != n){ // se arrivo infondo e l'ultimo elemento non è quello cercato allora ritorno vettore vuoto
             return vector<int>(0);
         }
@@ -69,27 +72,27 @@ class node{
 };
 
 
-vector<vector<int>> trova_cicli(vector<node> grafo, int num_nodi, vector<vector<int>> &cicli ){ // ritorna i cicli del grafo
+vector<vector<int>>& trova_cicli(vector<node> grafo, int num_nodi, vector<vector<int>> &cicli, vector<int> &conteggio ){ // ritorna i cicli del grafo
 
     stack_polaretto stack;
 
     stack.push(0); // se 0 è separato da problemi
 
-    vector<bool> visited(num_nodi,false);
+    vector<bool> visited(num_nodi,false); // inizializzo a false
 
     while(!stack.isEmpty()){
 
-        int elem = stack.top();
+        int elem = stack.top(); // prendo il primo elemento. (?) se zero NON è nel grafo?
 
         visited[elem] = true;
 
-        if(grafo[elem].getDaVisitare().empty()){
+        if(grafo[elem].getDaVisitare().empty()){ // se non ci sono elementi da visitare (non ci sono vicini)
             grafo[elem].swap();
             stack.pop();
 
         }else{
              // Prendo il primo elemento da `daVisitare`
-            auto it = grafo[elem].getDaVisitare().begin();
+            auto it = grafo[elem].getDaVisitare().begin(); //restiutuisce un iteratore al primo elemento
             int a = *it;
 
             // Sposto l'elemento
@@ -98,7 +101,8 @@ vector<vector<int>> trova_cicli(vector<node> grafo, int num_nodi, vector<vector<
 
             if (stack.isInStack(a)) {
                 // Trovato un ciclo, non pusho nello stack
-                cicli.push_back(stack.getCycle(a));
+                cicli.push_back(stack.getCycle(a, conteggio));
+
             } else {
                 // Aggiungi il nodo nello stack
                 stack.push(a);
@@ -110,6 +114,7 @@ vector<vector<int>> trova_cicli(vector<node> grafo, int num_nodi, vector<vector<
     return cicli;
 }
 
+
 // quando faccio pop() devo guardare nel set 'daVisitare'
 
 
@@ -118,6 +123,7 @@ int main(){
     int numero_nodi, numero_archi;
 
     ifstream inputFile("input.txt");
+    ofstream out("output.txt");
     if (!inputFile) {
         cout << "Errore: impossibile aprire il file di input" << endl;
         return -1;
@@ -128,22 +134,38 @@ int main(){
     int s,a;
     for(int i = 0 ; i < numero_archi; ++i){
         inputFile>>s>>a;
-        
+
         grafo_iniziale[s].getDaVisitare().insert(a);
     }
     //vector<set<int>> corridoi(numero_nodi);
-                                                                                                            
-    vector<vector<int>> cicli(numero_nodi/3);
 
-    trova_cicli(grafo_iniziale,numero_nodi,cicli);
+    vector<vector<int>> cicli;
+    vector<int> conteggio(numero_nodi,0);
 
+    trova_cicli(grafo_iniziale,numero_nodi,cicli, conteggio);
+
+    /*
     for(auto a: cicli){
         for(auto b: a){
             cout << b << " | ";
         }
         cout <<endl;
-    }
+    }*/
 
+
+    //cout << "cicli size: " << cicli.size() << endl;
+    for(int i = 0; i < conteggio.size(); ++i){
+        if(cicli.size() == conteggio[i]) {
+            //cout << conteggio[i] << " ";
+            //cout << i << "";
+            out << i;
+            out.close();
+            return 0;
+        }
+    }
+    out << "-1";
+
+    out.close();
     return 0;
 }
 
