@@ -6,38 +6,6 @@
 
 using namespace std;
 
-vector<vector<int>> trova_cicli(vector<vector<pair<int,bool>>> grafo, int num_nodi){ // sparatemi
-
-    vector<vector<int>> cicli;
-
-    stack_polaretto stack;
-
-    stack.push(0); // se 0 è separato da problemi
-    vector<bool> visited(num_nodi,false);
-
-    while(!stack.isEmpty()){
-
-        int elem = stack.top();
-        visited[elem] = true;
-
-        for( auto a : grafo[0]){
-            if(stack.isInStack(a.first)){
-                // ciclo
-                cicli.push_back(stack.getCycle(a.first));
-                break;
-            }
-            if(!a.second){
-                a.second = true;
-                stack.push(a.first); // il primo adiacente non visitato
-                break;
-            }
-        }
-
-    }
-    return cicli;
-}
-
-
 class stack_polaretto{
     private:
         vector<int> vec;
@@ -56,7 +24,7 @@ class stack_polaretto{
     }
 
     int top(){
-        return vec[vec.size()];
+        return vec[vec.size() - 1];
     }
 
     bool isInStack(int n){
@@ -74,6 +42,7 @@ class stack_polaretto{
         for(i = vec.size() -1 ; i >= 0 && vec[i] != n ; --i){
             ris.push_back(vec[i]);
         }
+        ris.push_back(n);
         if(i < 0 && vec[0] != n){ // se arrivo infondo e l'ultimo elemento non è quello cercato allora ritorno vettore vuoto
             return vector<int>(0);
         }
@@ -81,12 +50,68 @@ class stack_polaretto{
     }
 };
 
-//struttura per memorizzare il nodo
-/* struct node{
-    int arrive = -1;
-    node* next;
+class node{
+    bool swapped = false;
+    set<int> daVisitare;
+    set<int> visitati;
+    public:
+    set<int>& getVisistati(){
+        return swapped ? daVisitare : visitati;
+    }
+    set<int>& getDaVisitare(){
+        return swapped ? visitati : daVisitare;
+    }
+
+    void swap(){
+        swapped = !swapped;
+    }
+
 };
- */
+
+
+vector<vector<int>> trova_cicli(vector<node> grafo, int num_nodi, vector<vector<int>> &cicli ){ // ritorna i cicli del grafo
+
+    stack_polaretto stack;
+
+    stack.push(0); // se 0 è separato da problemi
+
+    vector<bool> visited(num_nodi,false);
+
+    while(!stack.isEmpty()){
+
+        int elem = stack.top();
+
+        visited[elem] = true;
+
+        if(grafo[elem].getDaVisitare().empty()){
+            grafo[elem].swap();
+            stack.pop();
+
+        }else{
+             // Prendo il primo elemento da `daVisitare`
+            auto it = grafo[elem].getDaVisitare().begin();
+            int a = *it;
+
+            // Sposto l'elemento
+            grafo[elem].getVisistati().insert(a);
+            grafo[elem].getDaVisitare().erase(it);
+
+            if (stack.isInStack(a)) {
+                // Trovato un ciclo, non pusho nello stack
+                cicli.push_back(stack.getCycle(a));
+            } else {
+                // Aggiungi il nodo nello stack
+                stack.push(a);
+            }
+        }
+
+    }
+
+    return cicli;
+}
+
+// quando faccio pop() devo guardare nel set 'daVisitare'
+
 
 int main(){
 
@@ -99,32 +124,28 @@ int main(){
     }
 
     inputFile >> numero_nodi >> numero_archi;
-    vector<vector<pair<int,bool>>> grafo_iniziale;
+    vector<node> grafo_iniziale(numero_nodi);
     int s,a;
     for(int i = 0 ; i < numero_archi; ++i){
         inputFile>>s>>a;
-        grafo_iniziale[s].push_back(pair<int,bool>(a,false));
+        
+        grafo_iniziale[s].getDaVisitare().insert(a);
     }
     //vector<set<int>> corridoi(numero_nodi);
                                                                                                             
-    vector<vector<int>> cicli;
+    vector<vector<int>> cicli(numero_nodi/3);
 
-    cicli = trova_cicli(grafo_iniziale,numero_nodi);
+    trova_cicli(grafo_iniziale,numero_nodi,cicli);
 
     for(auto a: cicli){
         for(auto b: a){
-            cout << b << " ";
+            cout << b << " | ";
         }
         cout <<endl;
     }
 
+    return 0;
 }
-
-
-
-
-
-
 
 //memorizzazione del file input nella lista di adiacenza
 
