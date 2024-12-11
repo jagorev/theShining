@@ -1,11 +1,14 @@
-#include <iostream>
+
 #include <fstream>
 #include <vector>
 #include <set>
+#include <unordered_set>
 
 
 using namespace std;
 
+int n_cicli = 0;
+vector<int> ciclo;
 
 class stack_polaretto{
     private:
@@ -37,19 +40,24 @@ class stack_polaretto{
     }
 
 
-    vector<int> getCycle(int n, vector<int> &conteggio){ // da chiamare solo quando si è sicuri, gestisco il caso in cui non ci sia ma è meglio non specare tempo
-        vector<int> ris;
+    void getCycle(int n, vector<int> &conteggio){ // da chiamare solo quando si è sicuri, gestisco il caso in cui non ci sia ma è meglio non specare tempo
         int i;
-        for(i = vec.size() -1 ; i >= 0 && vec[i] != n ; --i){
-            ris.push_back(vec[i]);
-            conteggio[vec[i]]++;
+        
+        if(n_cicli == 0){
+            for(i = vec.size() -1 ; i >= 0 && vec[i] != n ; --i){
+                ciclo.push_back(vec[i]);
+                ++conteggio[vec[i]];
+            }
+            ciclo.push_back(n);
+            ++n_cicli;
+        }else{
+            for(i = vec.size() -1 ; i >= 0 && vec[i] != n ; --i){
+                ++conteggio[vec[i]];
+            }
+            
+            conteggio[n]++;
+            ++n_cicli;
         }
-        ris.push_back(n);
-        conteggio[n]++;
-        if(i < 0 && vec[0] != n){ // se arrivo infondo e l'ultimo elemento non è quello cercato allora ritorno vettore vuoto
-            return vector<int>(0);
-        }
-        return ris;
     }
 };
 
@@ -72,12 +80,12 @@ class node{
 };
 
 
-vector<vector<int>>& trova_cicli(vector<node> grafo, int num_nodi, vector<vector<int>> &cicli, vector<int> &conteggio,set<int>& nodi_visistare ){ // ritorna i cicli del grafo
+void trova_cicli(vector<node> grafo, int num_nodi, vector<int>& conteggio, set<int>& nodi_visistare ){ // ritorna i cicli del grafo
 
 
     stack_polaretto stack;
 
-    vector<bool> visited(num_nodi,false); // inizializzo a false
+  /*   vector<bool> visited(num_nodi,false); // inizializzo a false */
 
     while(!nodi_visistare.empty()){
 
@@ -88,7 +96,7 @@ vector<vector<int>>& trova_cicli(vector<node> grafo, int num_nodi, vector<vector
             int elem = stack.top(); // prendo il primo elemento. (?) se zero NON è nel grafo?
             nodi_visistare.erase(elem);
 
-            visited[elem] = true;
+           /*  visited[elem] = true; */
 
             if(grafo[elem].getDaVisitare().empty()){ // se non ci sono elementi da visitare (non ci sono vicini)
                 grafo[elem].swap();
@@ -105,7 +113,8 @@ vector<vector<int>>& trova_cicli(vector<node> grafo, int num_nodi, vector<vector
 
                 if (stack.isInStack(a)) {
                     // Trovato un ciclo, non pusho nello stack
-                    cicli.push_back(stack.getCycle(a, conteggio));
+                    
+                    stack.getCycle(a, conteggio);
 
                 } else {
                     // Aggiungi il nodo nello stack
@@ -116,11 +125,6 @@ vector<vector<int>>& trova_cicli(vector<node> grafo, int num_nodi, vector<vector
         }
 
     }
-
-    
-
-
-    return cicli;
 }
 
 
@@ -129,14 +133,11 @@ vector<vector<int>>& trova_cicli(vector<node> grafo, int num_nodi, vector<vector
 
 int main(){
 
+
     int numero_nodi, numero_archi;
 
     ifstream inputFile("input.txt");
     ofstream out("output.txt");
-    if (!inputFile) {
-        cout << "Errore: impossibile aprire il file di input" << endl;
-        return -1;
-    }
 
     inputFile >> numero_nodi >> numero_archi;
     vector<node> grafo_iniziale(numero_nodi);
@@ -152,10 +153,9 @@ int main(){
     }
     //vector<set<int>> corridoi(numero_nodi);
 
-    vector<vector<int>> cicli;
     vector<int> conteggio(numero_nodi,0);
 
-    trova_cicli(grafo_iniziale,numero_nodi,cicli, conteggio,nodi_da_visitare);
+    trova_cicli(grafo_iniziale,numero_nodi,conteggio,nodi_da_visitare);
 
     /*
     for(auto a: cicli){
@@ -168,16 +168,19 @@ int main(){
 
     //cout << "cicli size: " << cicli.size() << endl;
     for(int i = 0; i < conteggio.size(); ++i){
-        if(cicli.size() == conteggio[i]) {
+        if(n_cicli == conteggio[i]) {
             //cout << conteggio[i] << " ";
             //cout << i << "";
-            out << i;
+            out << i << endl;
+            out << ciclo.size()<<" ";
+            for(auto a = ciclo.rbegin(); a != ciclo.rend(); a++){
+                out<<*a<<" ";
+            }
             out.close();
             return 0;
         }
     }
     out << "-1";
-
     out.close();
     return 0;
 }
