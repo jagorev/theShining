@@ -1,0 +1,7 @@
+{
+    "files.associations": {
+        "*.dbclient-js": "javascript",
+        "unordered_set": "cpp",
+        "bitset": "cpp"
+    }
+}
